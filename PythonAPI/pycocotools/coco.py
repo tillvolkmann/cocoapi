@@ -1,5 +1,32 @@
 __author__ = 'tylin'
 __version__ = '2.0'
+
+r"""
+Extended functionality for handling COCO datasets, based on official cocoapi.
+
+Added features include:
+* input of coco dictionary added (previously could only load from file)
+* get summary of data set
+* some visualization features
+
+Examples:
+# instantiate COCO class object
+coco = COCO(annotation_file=coco_dic)
+# get summary of all annotations and print it pretty
+sumdic = coco.getSum(pretty_print=True)
+print(sumdic)
+# get all category ids (based on field "categories")
+coco.getCatIds()
+# print unique category names
+categories = self.loadCats(coco.getCatIds())
+category_names = [category['name'] for category in categories]
+print('Custom COCO categories: \n{}\n'.format(' '.join(category_names)))
+# print unique supercategory names
+categories = self.loadCats(coco.getCatIds())
+supercategory_names = set([category['supercategory'] for category in categories])
+print('Custom COCO supercategories: \n{}'.format(' '.join(supercategory_names)))
+"""
+
 # Interface for accessing the Microsoft COCO dataset.
 
 # Microsoft COCO is a large image dataset designed for object detection,
@@ -79,14 +106,20 @@ class COCO:
         # load dataset
         self.dataset,self.anns,self.cats,self.imgs = dict(),dict(),dict(),dict()
         self.imgToAnns, self.catToImgs = defaultdict(list), defaultdict(list)
-        if not annotation_file == None:
-            print('loading annotations into memory...')
-            tic = time.time()
-            dataset = json.load(open(annotation_file, 'r'))
-            assert type(dataset)==dict, 'annotation file format {} not supported'.format(type(dataset))
-            print('Done (t={:0.2f}s)'.format(time.time()- tic))
-            self.dataset = dataset
-            self.createIndex()
+        if annotation_file is not None:
+            if isinstance(annotation_file, str):
+                print('loading annotations into memory...')
+                tic = time.time()
+                dataset = json.load(open(annotation_file, 'r'))
+                assert type(dataset)==dict, 'annotation file format {} not supported'.format(type(dataset))
+                print('Done (t={:0.2f}s)'.format(time.time()- tic))
+                self.dataset = dataset
+                self.createIndex()
+            elif isinstance(annotation_file, dict):  # assume file like object
+                self.dataset = annotation_file
+                self.createIndex()
+            else:
+                raise Exception("input annotation format not compatible.")
 
     def createIndex(self):
         # create index
@@ -231,7 +264,7 @@ class COCO:
         elif type(ids) == int:
             return [self.imgs[ids]]
 
-    def showAnns(self, anns):
+    def showAnns_deprecated(self, anns):
         """
         Display the specified annotations.
         :param anns (array of object): annotations to display
@@ -295,6 +328,95 @@ class COCO:
             for ann in anns:
                 print(ann['caption'])
 
+    def showAnns(self, anns, draw_segm=True, draw_keyp=True, draw_bbox=False):
+        """
+        Display the specified annotations.
+        Extend functionality:
+        - made drawing segmentation optional
+        - option to show bboxes.
+        - option to control appearance.
+        - option to select subset of classes ?
+        - option to 
+        - option to show second set of anns, i.e. anns and detections.
+        Original implementation here: https://github.com/cocodataset/cocoapi/blob/master/PythonAPI/pycocotools/coco.py
+        bbox mod here: https://github.com/cocodataset/cocoapi/pull/183/files
+
+        :param anns (array of object): annotations to display
+        :return: None
+        """
+        if len(anns) == 0:
+            return 0
+        if 'segmentation' in anns[0] or 'keypoints' in anns[0]:
+            datasetType = 'instances'
+        elif 'caption' in anns[0]:
+            datasetType = 'captions'
+        else:
+            raise Exception('datasetType not supported')
+        if datasetType == 'instances':
+            ax = plt.gca()
+            ax.set_autoscale_on(False)
+            polygons = []
+            color = []
+            for ann in anns:
+                c = (np.random.random((1, 3))*0.6+0.4).tolist()[0]
+                # plot segmentations
+                if ('segmentation' in ann) and draw_segm:
+                    if type(ann['segmentation']) == list:
+                        # polygon
+                        for seg in ann['segmentation']:
+                            poly = np.array(seg).reshape((int(len(seg)/2), 2))
+                            polygons.append(Polygon(poly))
+                            color.append(c)
+                    else:
+                        # mask
+                        t = self.imgs[ann['image_id']]
+                        if type(ann['segmentation']['counts']) == list:
+                            rle = maskUtils.frPyObjects([ann['segmentation']], t['height'], t['width'])
+                        else:
+                            rle = [ann['segmentation']]
+                        m = maskUtils.decode(rle)
+                        img = np.ones( (m.shape[0], m.shape[1], 3) )
+                        if ann['iscrowd'] == 1:
+                            color_mask = np.array([2.0,166.0,101.0])/255
+                        if ann['iscrowd'] == 0:
+                            color_mask = np.random.random((1, 3)).tolist()[0]
+                        for i in range(3):
+                            img[:,:,i] = color_mask[i]
+                        ax.imshow(np.dstack( (img, m*0.5) ))
+                # plot keypoints
+                if ('keypoints' in ann and type(ann['keypoints']) == list) and draw_keyp:
+                    # turn skeleton into zero-based index
+                    sks = np.array(self.loadCats(ann['category_id'])[0]['skeleton'])-1
+                    kp = np.array(ann['keypoints'])
+                    x = kp[0::3]
+                    y = kp[1::3]
+                    v = kp[2::3]
+                    for sk in sks:
+                        if np.all(v[sk]>0):
+                            plt.plot(x[sk],y[sk], linewidth=3, color=c)
+                    plt.plot(x[v>0], y[v>0],'o',markersize=8, markerfacecolor=c, markeredgecolor='k',markeredgewidth=2)
+                    plt.plot(x[v>1], y[v>1],'o',markersize=8, markerfacecolor=c, markeredgecolor=c, markeredgewidth=2)
+                # plot bboxes
+                if ('bbox' in ann) and draw_bbox:
+                    # bbox
+                    [bbox_x, bbox_y, bbox_w, bbox_h] = ann['bbox']
+                    poly = [[bbox_x, bbox_y], [bbox_x, bbox_y+bbox_h], [bbox_x+bbox_w, bbox_y+bbox_h], [bbox_x+bbox_w, bbox_y]]
+                    np_poly = np.array(poly).reshape((4,2))
+                    polygons.append(Polygon(np_poly))
+                    color.append(c)
+                    # plot extra line
+                    ax.add_patch(Polygon(np_poly, linestyle='--', facecolor='none', edgecolor=c, linewidth=8))
+            # 
+            p = PatchCollection(polygons, facecolor=color, linewidths=0, alpha=0.4)
+            ax.add_collection(p)
+            p = PatchCollection(polygons, facecolor='none', edgecolors=color, linewidths=2)
+            ax.add_collection(p)
+            # plot class names and/or probabilities
+            
+        elif datasetType == 'captions':
+            for ann in anns:
+                print(ann['caption'])
+                
     def loadRes(self, resFile):
         """
         Load result file and return a result api object.
@@ -438,3 +560,34 @@ class COCO:
         rle = self.annToRLE(ann)
         m = maskUtils.decode(rle)
         return m
+
+    def getSum(self, pretty_print=False):
+            """
+            Summarize annotations.
+            """
+
+            # get lists of all relevant attributes
+            category_ids = self.getCatIds()
+            categories = self.loadCats(category_ids)
+            category_names = [category['name'] for category in categories]
+            supercategory_names = [category['supercategory'] for category in categories]
+            supercategory_names_unique = set(supercategory_names)
+            category_anno_count = []
+            category_img_count = []
+            for cid in category_ids:
+                category_anno_count.append(len(self.getAnnIds(catIds=cid)))
+                category_img_count.append(len(self.getImgIds(catIds=cid)))
+            # foramt in a dict with id as key
+            sumdic = {key: {'supercategory': '', 'name': '', 'num_anno': 0, 'num_img': 0} for key in
+                    category_ids}  # preallocate
+            for i, key in enumerate(sumdic.keys()):
+                sumdic[key]['supercategory'] = supercategory_names[i]
+                sumdic[key]['name'] = category_names[i]
+                sumdic[key]['num_anno'] = category_anno_count[i]
+                sumdic[key]['num_img'] = category_img_count[i]
+
+            # Pretty print the result
+            if pretty_print:
+                sumdic = pprint.pformat(sumdic, indent=1, width=160, depth=None)
+
+            return sumdic
