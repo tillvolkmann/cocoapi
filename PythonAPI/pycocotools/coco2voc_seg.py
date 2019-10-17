@@ -84,10 +84,11 @@ def coco2voc_seg(anns_file, target_folder, type="instance", n=None, compress=Tru
     coco_instance = COCO(anns_file)
     coco_imgs = coco_instance.imgs
 
+    print(n)
     if n is None:
         n = len(coco_imgs)
     else:
-        assert type(n) == int, "n must be an int"
+        assert isinstance(n, int), "n must be an int"
         n = min(n, len(coco_imgs))
 
     instance_target_path = os.path.join(target_folder, 'instance_labels')
