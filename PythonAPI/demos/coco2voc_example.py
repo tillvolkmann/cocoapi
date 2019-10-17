@@ -53,3 +53,4 @@ def parse_args():
 if __name__ == '__main__':
     args = parse_args()
     convert_coco2voc(args.anno_file, args.image_dir, args.output_dir, args.type)
+    print("Succesfully converted COCO to VOC.")

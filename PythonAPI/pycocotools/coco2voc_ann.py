@@ -1,3 +1,8 @@
+import argparse, json
+import cytoolz
+from lxml import etree, objectify
+import os, re
+
 def instance2xml_base(anno):
     E = objectify.ElementMaker(annotate=False)
     anno_tree = E.annotation(
@@ -129,8 +134,8 @@ def coco2voc_ann(annotation_file, output_dir, type='instance'):
     """
     assert type in ['instance', 'keypoint']
 
-    if not os.path.exists(args.output_dir):
-        os.makedirs(args.output_dir)
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
 
     if type == 'instance':
         content = json.load(open(annotation_file, 'r'))
@@ -144,3 +149,4 @@ def coco2voc_ann(annotation_file, output_dir, type='instance'):
     
     elif type == 'keypoint':
         parse_keypoints(content, output_dir)
+
