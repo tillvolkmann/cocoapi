@@ -138,7 +138,9 @@ def coco2voc_seg(anns_file, target_folder, type="instance", n=None, compress=Tru
             np.save(os.path.join(id_target_path, img_name + '.npy'), id_seg)
 
         # make a seg map equivalent to original VOC segs
-        Image.fromarray(class_seg).putpalette(cmap).save(os.path.join(classcolor_target_path, img_name))
+        tmp_img = Image.fromarray(class_seg)
+        tmp_img.putpalette(cmap)
+        tmp_img.save(os.path.join(classcolor_target_path, img_name))
 
         # append to image id list
         image_id_list.write(str(img_id)+'\n')
