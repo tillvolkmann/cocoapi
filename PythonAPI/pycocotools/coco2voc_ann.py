@@ -68,8 +68,7 @@ def parse_instance_by_category(content, outdir):
             anno_tree.append(instance2xml_bbox(group, bbox_type='xyxy'))
         for filename in filenames:
             etree.ElementTree(anno_tree).write(filename, pretty_print=True)
-        print("Formating instance xml file {} done!".format(name))
-        
+
 
 def parse_instance(content, outdir):
     """
@@ -89,7 +88,6 @@ def parse_instance(content, outdir):
         for group in groups:
             anno_tree.append(instance2xml_bbox(group, bbox_type='xyxy'))
         etree.ElementTree(anno_tree).write(filename, pretty_print=True)
-        print("Formating instance xml file {} done!".format(name))
 
 
 def keypoints2xml_base(anno):
@@ -171,6 +169,7 @@ def coco2voc_ann(annotation_file, output_dir, type='instance', separate_categori
         os.makedirs(output_dir)
 
     if type == 'instance':
+        print("Formatting instance xml files ...")
         content = json.load(open(annotation_file, 'r'))
         if separate_categories:
             # make subdirectories, one for each category
@@ -188,5 +187,6 @@ def coco2voc_ann(annotation_file, output_dir, type='instance', separate_categori
             parse_instance(content, sub_dir)
 
     elif type == 'keypoint':  # note there is no diff here between categories, so separating is not relevant
+        print("Formatting keypoint xml files ...")
         parse_keypoints(content, output_dir)
 

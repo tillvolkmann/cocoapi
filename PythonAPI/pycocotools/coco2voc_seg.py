@@ -7,7 +7,7 @@ import os, re
 from PIL import Image
 import matplotlib.pyplot as plt
 import time
-
+from pycocotools.voclabelcolormap import color_map
 
 def annsToSeg(anns, coco_instance):
     '''
@@ -15,7 +15,8 @@ def annsToSeg(anns, coco_instance):
      !!!No guarantees where segmentations overlap - might lead to loss of objects!!!
     :param anns: COCO annotations as returned by 'coco.loadAnns'
     :param coco_instance: an instance of the COCO class from pycocotools
-    :return: three 2D numpy arrays where the value of each pixel is the class id, instance number, and instance id.
+    :return: three 2D numpy arrays where the value of each pixel is the class id, instance number, and instance id,
+        respectively.
     '''
     image_details = coco_instance.loadImgs(anns[0]['image_id'])[0]
 
@@ -92,13 +93,18 @@ def coco2voc_seg(anns_file, target_folder, type="instance", n=None, compress=Tru
         assert isinstance(n, int), "n must be an int"
         n = min(n, len(coco_imgs))
 
-    instance_target_path = os.path.join(target_folder, 'instance_labels')
-    class_target_path = os.path.join(target_folder, 'class_labels')
-    id_target_path = os.path.join(target_folder, 'id_labels')
+    instance_target_path = os.path.join(target_folder, 'SegmentationInstance')  # 'instance_labels')
+    classcolor_target_path = os.path.join(target_folder, 'SegmentationClass')  # 'class_labels')
+    class_target_path = os.path.join(target_folder, 'SegmentationClassRaw')  # 'class_labels')
+    id_target_path = os.path.join(target_folder, 'SegmentationId')  # 'id_labels')
 
     os.makedirs(instance_target_path, exist_ok=True)
+    os.makedirs(classcolor_target_path, exist_ok=True)
     os.makedirs(class_target_path, exist_ok=True)
     os.makedirs(id_target_path, exist_ok=True)
+
+    # get VOC palette (color map)
+    cmap = color_map()
 
     image_id_list = open(os.path.join(target_folder, 'images_ids.txt'), 'a+')
     start = time.time()
@@ -110,22 +116,34 @@ def coco2voc_seg(anns_file, target_folder, type="instance", n=None, compress=Tru
         if not anns:
             continue
 
+        # get class, instance, and id segmentation arrays
         class_seg, instance_seg, id_seg = annsToSeg(anns, coco_instance)
 
-        Image.fromarray(class_seg).convert("L").save(class_target_path + '/' + str(img) + '.png')
-        Image.fromarray(instance_seg).convert("L").save(instance_target_path + '/' + str(img) + '.png')
-        
+        # get image name
+        img_name = img['file_name']
+
+        # convert class segmentation images
+        Image.fromarray(class_seg).convert("L").save(os.path.join(class_target_path, img_name))
+        # convert instance segmentation images
+        Image.fromarray(instance_seg).convert("L").save(os.path.join(instance_target_path, img_name))
+        # convert id segmentation images
         if compress:
-            np.savez_compressed(os.path.join(id_target_path, str(img)), id_seg)
+            np.savez_compressed(os.path.join(id_target_path, img_name), id_seg)
         else:
-            np.save(os.path.join(id_target_path, str(img)+'.npy'), id_seg)
+            np.save(os.path.join(id_target_path, img_name + '.npy'), id_seg)
 
-        image_id_list.write(str(img)+'\n')
+        # make a seg map equivalent to original VOC segs
+        Image.fromarray(class_seg).putpalette(cmap).save(os.path.join(classcolor_target_path, img_name))
 
-        if i%100==0 and i>0:
-            print(str(i)+" annotations processed" +
-                  " in "+str(int(time.time()-start)) + " seconds")
-        if i>=n:
+        # append to image id list
+        image_id_list.write(os.path.splitext(os.path.basename(img_name))[0]+'\n')
+
+        # print status
+        if not (i+1) % 100:
+            print(f"processed {str(i)} of {n} annotations in {str(int(time.time()-start))} seconds")
+
+        # exit if n exceeded
+        if i >= n:
             break
 
     image_id_list.close()

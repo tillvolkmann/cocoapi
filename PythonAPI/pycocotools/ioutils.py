@@ -12,7 +12,7 @@ def list_files_in_dir(root_path, extension=None, sub_dirs=True):
     List all files in root directory.
 
     :param root_path: path to directory to search; if root_path is a file, the path to the file is returned without exception
-    :param extension: extension
+    :param extension: keep only files with extensions element of this str or list
     :param sub_dirs: include sub directories in search
     :return: list of files in directory
     """
@@ -29,7 +29,7 @@ def list_files_in_dir(root_path, extension=None, sub_dirs=True):
                     file_path = os.path.join(dir_path, file_name)
                     file_paths.append(file_path)
         else:
-            file_paths = [f for f in os.listdir(root_path) if os.path.isfile(os.path.join(root_path, f))]
+            file_paths = [os.path.join(root_path, f) for f in os.listdir(root_path) if os.path.isfile(os.path.join(root_path, f))]
     else:  # or pass on the single file name
         file_paths = root_path
 
