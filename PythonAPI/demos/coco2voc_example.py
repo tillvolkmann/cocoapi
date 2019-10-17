@@ -1,7 +1,6 @@
-from coco2voc_seg import *
-from coco2voc_ann import *
+from pycocotools.coco2voc_seg import *
+from pycocotools.coco2voc_ann import *
 from PIL import Image
-
 import argparse, json
 import os, re
 
@@ -15,12 +14,12 @@ def convert_coco2voc(annotation_file, image_dir, output_dir, type='instance', co
     """
     assert type in ['instance', 'keypoint']
 
-    if not os.path.exists(args.output_dir):
-        os.makedirs(args.output_dir)
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
     # Convert COCO annotations to VOC segmentation masks png images
     coco2voc_seg(annotation_file, output_dir, n=None, compress=True)
     # Convert COCO annotations to VOC annotation xml
-    coco2voc_ann(annotation_file, output_dir, type='instance'):
+    coco2voc_ann(annotation_file, output_dir, type='instance')
     # Copy images to output_dir
     if copy_images:
         # specific output dir for a split is named after "images_" plus name of the split

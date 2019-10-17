@@ -1,4 +1,5 @@
 from pycocotools import mask as maskUtils
+from pycocotools.coco import COCO
 import numpy as np
 import cytoolz
 from lxml import etree, objectify
