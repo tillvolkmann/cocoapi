@@ -4,6 +4,7 @@ pycocotools/__init__.py
 pycocotools/_mask.c
 pycocotools/coco.py
 pycocotools/cocoeval.py
+pycocotools/cocoseg2png.py
 pycocotools/cocostuffeval.py
 pycocotools/cocostuffhelper.py
 pycocotools/mask.py

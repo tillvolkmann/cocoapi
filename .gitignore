@@ -7,6 +7,7 @@ annotations/
 results/
 external/
 .DS_Store
+notebooks
 
 MatlabAPI/analyze*/
 MatlabAPI/visualize*/
@@ -17,3 +18,6 @@ PythonAPI/pycocotools/_mask.so
 PythonAPI/pycocotools/coco.pyc
 PythonAPI/pycocotools/cocoeval.pyc
 PythonAPI/pycocotools/mask.pyc
+
+
+

@@ -1,0 +1,45 @@
+name: findoc
+channels:
+    - conda-forge
+    - defaults  
+dependencies:
+    # python version
+    - python=3.6
+    # general
+    - pip
+    - jupyter
+    # ? - jupyter_client
+    # ? - jupyter_console
+    # ? - jupyter_core
+    - jupyterlab
+    - nb_conda_kernels
+    - pathlib
+    # tools for testing and style
+    - pytest
+    - pytest-cov
+    - pylint
+    - flake8
+    # data science basics
+    - numpy
+    - pandas
+    - pillow
+    - sqlalchemy
+    - statsmodels
+    - scikit-image
+    - scikit-learn
+    - xlrd
+    # natural language processing
+    - nltk
+    # visualization
+    - bokeh
+    - matplotlib
+    - seaborn
+    - dash
+    # web
+    - beautifulsoup4
+    - curl
+    - flask
+    # deep learning
+    - pip:
+        - requests-oauthlib
+        - selenium
