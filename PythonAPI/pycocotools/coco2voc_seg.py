@@ -106,13 +106,18 @@ def coco2voc_seg(anns_file, target_folder, type="instance", n=None, compress=Tru
     # get VOC palette (color map)
     cmap = color_map()
 
-    image_id_list = open(os.path.join(target_folder, 'images_ids.txt'), 'a+')
+    # instantiate image id and name list
+    image_id_list = open(os.path.join(target_folder, 'images_ids.txt'), 'a+')  # not sure if this is needed
+    image_name_list = open(os.path.join(target_folder, 'images_names.txt'), 'a+')
     start = time.time()
 
-    for i, img in enumerate(coco_imgs):
+    for i, img_id in enumerate(coco_imgs):
 
-        anns_ids = coco_instance.getAnnIds(img)
+        # get anns
+        anns_ids = coco_instance.getAnnIds(img_id)
         anns = coco_instance.loadAnns(anns_ids)
+
+        # skip if no anns
         if not anns:
             continue
 
@@ -120,7 +125,7 @@ def coco2voc_seg(anns_file, target_folder, type="instance", n=None, compress=Tru
         class_seg, instance_seg, id_seg = annsToSeg(anns, coco_instance)
 
         # get image name
-        img_name = img['file_name']
+        img_name = coco_imgs[img_id]['file_name']
 
         # convert class segmentation images
         Image.fromarray(class_seg).convert("L").save(os.path.join(class_target_path, img_name))
@@ -136,7 +141,8 @@ def coco2voc_seg(anns_file, target_folder, type="instance", n=None, compress=Tru
         Image.fromarray(class_seg).putpalette(cmap).save(os.path.join(classcolor_target_path, img_name))
 
         # append to image id list
-        image_id_list.write(os.path.splitext(os.path.basename(img_name))[0]+'\n')
+        image_id_list.write(str(img_id)+'\n')
+        image_name_list.write(os.path.splitext(os.path.basename(img_name))[0]+'\n')
 
         # print status
         if not (i+1) % 100:
