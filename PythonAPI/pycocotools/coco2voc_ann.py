@@ -47,7 +47,10 @@ def instance2xml_bbox(anno, bbox_type='xyxy'):
     return anno_tree
 
 
-def parse_instance(content, outdir):
+def parse_instance_by_category(content, outdir):
+    """
+    Original version, does create replicate files for each category.
+    """
     categories = {d['id']: d['name'] for d in content['categories']}
     # merge images and annotations: id in images vs image_id in annotations
     merged_info_list = list(map(cytoolz.merge, cytoolz.join('id', content['images'], 'image_id', content['annotations'])))
@@ -65,6 +68,27 @@ def parse_instance(content, outdir):
             anno_tree.append(instance2xml_bbox(group, bbox_type='xyxy'))
         for filename in filenames:
             etree.ElementTree(anno_tree).write(filename, pretty_print=True)
+        print("Formating instance xml file {} done!".format(name))
+        
+
+def parse_instance(content, outdir):
+    """
+    Version that does not create replicate files for each category.
+    """
+    categories = {d['id']: d['name'] for d in content['categories']}
+    # merge images and annotations: id in images vs image_id in annotations
+    merged_info_list = list(map(cytoolz.merge, cytoolz.join('id', content['images'], 'image_id', content['annotations'])))
+    # convert category id to name
+    for instance in merged_info_list:
+        instance['category_id'] = categories[instance['category_id']]
+    # group by filename to pool all bbox in same file
+    for name, groups in cytoolz.groupby('file_name', merged_info_list).items():
+        anno_tree = instance2xml_base(groups[0])
+        # if one file have multiple different objects, save it in each category sub-directory
+        filename = os.path.join(outdir, os.path.splitext(name)[0] + ".xml")
+        for group in groups:
+            anno_tree.append(instance2xml_bbox(group, bbox_type='xyxy'))
+        etree.ElementTree(anno_tree).write(filename, pretty_print=True)
         print("Formating instance xml file {} done!".format(name))
 
 
@@ -128,9 +152,18 @@ def parse_keypoints(content, outdir):
         print("Formating keypoints xml file {} done!".format(name))
 
 
-def coco2voc_ann(annotation_file, output_dir, type='instance'):
+def coco2voc_ann(annotation_file, output_dir, type='instance', separate_categories=False):
     """
     Convert COCO annotations to VOC annotation xml
+
+    :param separate_categories: if True, replicate xmls into separate folders for each category, where each folder
+        contains only those xmls that contain the respective category, albeit with the remaining categories still in that xml.
+        If False, will create only one xml per image in folder "Annotations".
+
+    Credit to: https://github.com/CasiaFan/Dataset_to_VOC_converter/blob/master/anno_coco2voc.py
+    The default behavior of above implentation is to save xml files containing all classes but into
+    separate folders by class. This is the non-default behavior in this implementation,
+    but can be achieved by setting separate_categories=True.
     """
     assert type in ['instance', 'keypoint']
 
@@ -139,14 +172,21 @@ def coco2voc_ann(annotation_file, output_dir, type='instance'):
 
     if type == 'instance':
         content = json.load(open(annotation_file, 'r'))
-        # make subdirectories
-        sub_dirs = [re.sub(" ", "_", cate['name']) for cate in content['categories']]
-        for sub_dir in sub_dirs:
-            sub_dir = os.path.join(output_dir, str(sub_dir))
+        if separate_categories:
+            # make subdirectories, one for each category
+            sub_dirs = [re.sub(" ", "_", cate['name']) for cate in content['categories']]
+            for sub_dir in sub_dirs:
+                sub_dir = os.path.join(output_dir, str(sub_dir))
+                if not os.path.exists(sub_dir):
+                    os.makedirs(sub_dir)
+            parse_instance_by_category(content, output_dir)
+        else:
+            # make a single annotations folder, called "Annotations" according with original VOC2012
+            sub_dir = os.path.join(output_dir, 'Annotations')
             if not os.path.exists(sub_dir):
                 os.makedirs(sub_dir)
-        parse_instance(content, output_dir)
-    
+            parse_instance(content, output_dir)
+
     elif type == 'keypoint':
         parse_keypoints(content, output_dir)
 

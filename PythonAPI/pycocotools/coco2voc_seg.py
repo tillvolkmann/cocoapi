@@ -79,12 +79,13 @@ def coco2voc_seg(anns_file, target_folder, type="instance", n=None, compress=Tru
     :param n: Number of image annotations to convert. Default is None in which case all of the annotations are converted
     :param compress: if True, id segmentation masks are saved as '.npz' compressed files. if False they are saved as '.npy'
     :return: All segmentations are saved to the target folder, along with a list of ids of the images that were converted
+
+    Credit to:
     '''
 
     coco_instance = COCO(anns_file)
     coco_imgs = coco_instance.imgs
 
-    print(n)
     if n is None:
         n = len(coco_imgs)
     else:
