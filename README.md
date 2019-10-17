@@ -6,7 +6,9 @@ pip install git+https://github.com/tillvolkmann/cocoapi.git#subdirectory=PythonA
 
 ### Data set conversions
 #### COCO2VOC
-Key info on VOC format:
+Reference info on VOC2012 is found [here](http://host.robots.ox.ac.uk/pascal/VOC/voc2012/htmldoc/).
+
+Some key info on VOC format:
 *Annotations*
 * Annotations are store in xml format. An example can be found [here](https://gist.github.com/Prasad9/30900b0ef1375cc7385f4d85135fdb44).
 * Each image has its own annotation file. The image file and annotation file should have the same file name, except for the extensions.

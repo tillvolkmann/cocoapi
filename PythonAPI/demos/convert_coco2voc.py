@@ -11,6 +11,8 @@ def convert_coco2voc(annotation_file, image_dir, output_dir, type='instance', co
      = '/home/dl/1TB-Volumn/MSCOCO2017/annotations/instances_train2017.json'
     output_dir = '/home/dl/PycharmProjects/coco2voc-master/output'
     image_dir = '/home/dl/1TB-Volumn/MSCOCO2017/train2017'
+
+    The annotation output 
     """
     assert type in ['instance', 'keypoint']
 

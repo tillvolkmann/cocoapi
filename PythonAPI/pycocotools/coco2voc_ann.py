@@ -185,8 +185,8 @@ def coco2voc_ann(annotation_file, output_dir, type='instance', separate_categori
             sub_dir = os.path.join(output_dir, 'Annotations')
             if not os.path.exists(sub_dir):
                 os.makedirs(sub_dir)
-            parse_instance(content, output_dir)
+            parse_instance(content, sub_dir)
 
-    elif type == 'keypoint':
+    elif type == 'keypoint':  # note there is no diff here between categories, so separating is not relevant
         parse_keypoints(content, output_dir)
 
