@@ -34,7 +34,7 @@ def coco2voc(annotation_file, image_dir, output_dir, ann_type='instance', copy_i
         os.makedirs(output_dir)
 
     # Convert COCO annotations to VOC segmentation masks png images
-    coco2voc_seg(annotation_file, output_dir, n=5, compress=True)
+    coco2voc_seg(annotation_file, output_dir, n=None, compress=True)
 
     # Convert COCO annotations to VOC annotation xml
     coco2voc_ann(annotation_file, output_dir, type=ann_type)

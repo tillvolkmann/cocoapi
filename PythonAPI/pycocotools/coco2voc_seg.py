@@ -118,7 +118,7 @@ def coco2voc_seg(anns_file, target_folder, type="instance", n=None, compress=Tru
                                         f'image_names_{os.path.splitext(os.path.basename(anns_file))[0]}.txt'), 'a+')
     start = time.time()
 
-    print("Creating VOC segmentation masks ...")
+    print("Creating VOC segmentation masks...")
 
     for i, img_id in enumerate(coco_imgs):
 
