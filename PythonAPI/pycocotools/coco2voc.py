@@ -52,6 +52,9 @@ def coco2voc(annotation_file, image_dir, output_dir, ann_type='instance', copy_i
             destination_image_path = os.path.join(output_dir_images, os.path.basename(source_image_path))
             copy_file(source_image_path, destination_image_path)
 
+    # print termination message
+    print("Successfully converted COCO data set to VOC format!")
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -66,4 +69,3 @@ def parse_args():
 if __name__ == '__main__':
     args = parse_args()
     coco2voc(args.anno_file, args.image_dir, args.output_dir, args.anno_type, args.copy_images)
-    print("Successfully converted COCO to VOC.")

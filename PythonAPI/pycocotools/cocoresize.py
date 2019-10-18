@@ -25,6 +25,9 @@ def resize_coco(annotation_file, output_annotation_file,
     :param preseve_aspect:
     :param output_file_type:
     """
+
+    assert output_file_type.lower() in ['png', 'jpeg']
+
     # create instance of coco object
     coco_instance = COCO(annotation_file)
     coco_imgs = coco_instance.imgs
@@ -43,6 +46,10 @@ def resize_coco(annotation_file, output_annotation_file,
         # infer original extension from image
     if output_file_type is None:
         output_file_type = os.path.splitext(coco_imgs[list(coco_imgs.keys())[0]]['file_name'])[1][1:].lower()
+    # Pillow requires 'jpeg' as format spec, but 'jpg' is more common; so we pass 'jpeg' to pillow and use 'jpg' for file name
+    output_file_type_str = output_file_type
+    if output_file_type_str.lower() == 'jpeg':
+        output_file_type_str = 'jpg'
 
     # process each image
     for i, img_id in enumerate(coco_imgs):
@@ -74,11 +81,11 @@ def resize_coco(annotation_file, output_annotation_file,
             img_name = img_meta["file_name"]
             img_file_name = os.path.join(image_dir, img_name)
             output_img_file_name = os.path.join(output_image_dir,
-                                                os.path.splitext(img_name)[0] + '.' + output_file_type)
+                                                os.path.splitext(img_name)[0] + '.' + output_file_type_str)
             img = Image.open(img_file_name)
             img = img.resize(
                 (output_img_width, output_img_height))  # Image.ANTIALIAS was preferred in PIL, but not in Pillow
-            img.save(output_img_file_name, format=output_file_type)
+            img.save(output_img_file_name, format=output_file_type, quality=95, optimize=True, progressive=False)  # for export settings, see: https://pillow.readthedocs.io/en/5.1.x/handbook/image-file-formats.html
 
         # resize annotations
         for ann_id in anns_ids:
@@ -111,6 +118,9 @@ def resize_coco(annotation_file, output_annotation_file,
     with open(output_annotation_file, 'w') as json_file:
         json.dump(coco_instance.dataset, json_file)
 
+    # print termination message
+    print("Successfully resized COCO data set!")
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -120,7 +130,7 @@ def parse_args():
     parser.add_argument("--output_image_dir", type=str,default=None,  help="output directory for voc annotation xml file")
     parser.add_argument("--output_image_size", type=list, default=None, help="output directory for voc annotation xml file")
     parser.add_argument("--preseve_aspect", type=bool, default=True, help="whether to preserve aspect ratio")
-    parser.add_argument("--output_file_type", type=str, default=None, help="output file type")
+    parser.add_argument("--output_file_type", type=str, choices=['png', 'jpeg'], default=None, help="output file type")
     return parser.parse_args()
 
 
@@ -130,4 +140,3 @@ if __name__ == '__main__':
                 args.image_dir, args.output_image_dir,
                 args.output_image_size, args.preseve_aspect,
                 args.output_file_type)
-    print("Successfully resized COCO dataset.")
