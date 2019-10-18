@@ -28,7 +28,7 @@ def coco2voc(annotation_file, image_dir, output_dir, ann_type='instance', copy_i
     :param copy_images: copies image to sub dir "JPEGImages" in output_dir
     :return:
     """
-    assert type in ['instance', 'keypoint']
+    assert ann_type in ['instance', 'keypoint']
 
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
