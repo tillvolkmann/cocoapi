@@ -95,6 +95,7 @@ def coco2voc_seg(anns_file, target_folder, type="instance", n=None, compress=Tru
         assert isinstance(n, int), "n must be an int"
         n = min(n, len(coco_imgs))
 
+    # set and create output dirs
     instance_target_path = os.path.join(target_folder, 'SegmentationInstance')  # 'instance_labels')
     classcolor_target_path = os.path.join(target_folder, 'SegmentationClass')  # 'class_labels')
     class_target_path = os.path.join(target_folder, 'SegmentationClassRaw')  # 'class_labels')
@@ -105,6 +106,7 @@ def coco2voc_seg(anns_file, target_folder, type="instance", n=None, compress=Tru
     os.makedirs(classcolor_target_path, exist_ok=True)
     os.makedirs(class_target_path, exist_ok=True)
     os.makedirs(id_target_path, exist_ok=True)
+    os.makedirs(list_target_path, exist_ok=True)
 
     # get VOC palette (color map)
     cmap = color_map()
