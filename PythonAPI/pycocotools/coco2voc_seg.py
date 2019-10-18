@@ -84,6 +84,8 @@ def coco2voc_seg(anns_file, target_folder, type="instance", n=None, compress=Tru
     Credit to:
     '''
 
+    assert type == "instance", NotImplementedError("Only type 'instance' is implemented")
+
     coco_instance = COCO(anns_file)
     coco_imgs = coco_instance.imgs
 
@@ -97,6 +99,7 @@ def coco2voc_seg(anns_file, target_folder, type="instance", n=None, compress=Tru
     classcolor_target_path = os.path.join(target_folder, 'SegmentationClass')  # 'class_labels')
     class_target_path = os.path.join(target_folder, 'SegmentationClassRaw')  # 'class_labels')
     id_target_path = os.path.join(target_folder, 'SegmentationId')  # 'id_labels')
+    list_target_path = os.path.join(target_folder, 'ImageSets/Segmentation')
 
     os.makedirs(instance_target_path, exist_ok=True)
     os.makedirs(classcolor_target_path, exist_ok=True)
@@ -107,9 +110,13 @@ def coco2voc_seg(anns_file, target_folder, type="instance", n=None, compress=Tru
     cmap = color_map()
 
     # instantiate image id and name list
-    image_id_list = open(os.path.join(target_folder, 'images_ids.txt'), 'a+')  # not sure if this is needed
-    image_name_list = open(os.path.join(target_folder, 'images_names.txt'), 'a+')
+    image_id_list = open(os.path.join(list_target_path,
+                                        f'images_ids_{os.path.splitext(os.path.basename(anns_file))[0]}.txt'), 'a+')   # not sure if this is needed
+    image_name_list = open(os.path.join(list_target_path,
+                                        f'image_names_{os.path.splitext(os.path.basename(anns_file))[0]}.txt'), 'a+')
     start = time.time()
+
+    print("Creating VOC segmentation masks ...")
 
     for i, img_id in enumerate(coco_imgs):
 
